@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,9 +23,21 @@ export default function OptIn({
     email: "",
     phone: "",
     message: "",
+    plan: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Prefill selected plan from Pricing
+  useEffect(() => {
+    try {
+      const selected = typeof window !== "undefined" ? localStorage.getItem("selectedPlan") : null;
+      if (selected) {
+        setFormData((prev) => ({ ...prev, plan: selected }));
+      }
+    } catch {}
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
@@ -36,19 +48,38 @@ export default function OptIn({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          message: formData.message,
+          plan: formData.plan || undefined,
+          subject: "New website inquiry",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.ok === false) {
+        throw new Error(data?.error || "Failed to send message");
+      }
 
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIsSubmitting(false);
-    setIsSubmitted(true);
+      setIsSubmitting(false);
+      setIsSubmitted(true);
 
-    // Reset form after success message
-    setTimeout(() => {
-      setIsSubmitted(false);
-      setFormData({ name: "", email: "", phone: "", message: "" });
-    }, 3000);
+      // Reset form after success message
+      setTimeout(() => {
+        setIsSubmitted(false);
+        setFormData({ name: "", email: "", phone: "", message: "", plan: formData.plan });
+      }, 3000);
+    } catch (err: any) {
+      setIsSubmitting(false);
+      setError(err?.message || "Something went wrong. Please try again.");
+    }
   };
 
   if (isSubmitted) {
@@ -223,6 +254,18 @@ export default function OptIn({
                   </div>
                 )}
               </Button>
+
+              {formData.plan && (
+                <p className="text-sm text-gray-600 text-center">
+                  Selected Plan: <span className="font-semibold">{formData.plan}</span>
+                </p>
+              )}
+
+              {error && (
+                <p className="text-sm text-red-600 text-center" role="alert">
+                  {error}
+                </p>
+              )}
 
               <p className="text-sm text-gray-500 text-center">
                 We respect your privacy. Your information will never be shared.

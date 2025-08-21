@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+export const runtime = "nodejs";
 
 // POST /api/contact
 // Body: { name: string; email: string; message: string; subject?: string; phone?: string; plan?: string }
