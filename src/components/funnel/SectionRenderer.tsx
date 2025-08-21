@@ -13,7 +13,18 @@ export default function SectionRenderer({ sections }: { sections: Section[] }) {
         try {
           switch (section.type) {
             case "hero":
-              return <Hero key={idx} {...section.data} />;
+              return (
+                <Hero
+                  key={idx}
+                  {...(section.data as {
+                    eyebrow?: string;
+                    title: string;
+                    subtitle?: string;
+                    ctaPrimary?: { label: string; href?: string; onClick?: () => void };
+                    ctaSecondary?: { label: string; href?: string; onClick?: () => void };
+                  })}
+                />
+              );
             case "features":
               return <Features key={idx} items={section.data.items || []} />;
             case "testimonials":
