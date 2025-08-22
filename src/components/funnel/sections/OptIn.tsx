@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Mail, Phone, User, MessageSquare, CheckCircle, ArrowRight } from "lucide-react";
+import { Mail, Phone, User, MessageSquare, CheckCircle, ArrowRight, AlertCircle, X } from "lucide-react";
 
 type Action = { label: string; href?: string; onClick?: () => void };
 
@@ -75,7 +75,7 @@ export default function OptIn({
       setTimeout(() => {
         setIsSubmitted(false);
         setFormData({ name: "", email: "", phone: "", message: "", plan: formData.plan });
-      }, 3000);
+      }, 5000);
     } catch (err: any) {
       setIsSubmitting(false);
       setError(err?.message || "Something went wrong. Please try again.");
@@ -86,19 +86,60 @@ export default function OptIn({
     return (
       <section id="optin" className="py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-green-50 via-white to-blue-50" />
-        <div className="max-w-3xl mx-auto relative text-center">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.5, type: "spring" }}
-            className="mb-8"
-          >
-            <CheckCircle className="h-20 w-20 text-green-500 mx-auto mb-4" />
-            <h3 className="text-3xl font-bold text-gray-900 mb-4">Thank You!</h3>
-            <p className="text-lg text-gray-600">
-              We've received your message and will get back to you within 24 hours.
-            </p>
-          </motion.div>
+        <div className="max-w-4xl mx-auto relative">
+          <div className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100 text-center">
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.6, type: "spring" }}
+              className="mb-8"
+            >
+              <div className="w-24 h-24 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="h-12 w-12 text-white" />
+              </div>
+              <h3 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-4">
+                Message Sent Successfully!
+              </h3>
+              <p className="text-xl text-gray-600 mb-6">
+                Thank you for reaching out. We've received your message and will get back to you within 24 hours.
+              </p>
+              
+              <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-2xl p-6 mb-6">
+                <div className="grid md:grid-cols-3 gap-4 text-center">
+                  <div className="flex flex-col items-center">
+                    <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mb-2">
+                      <span className="text-white font-bold">1</span>
+                    </div>
+                    <p className="text-sm font-medium text-gray-700">Message Received</p>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mb-2">
+                      <span className="text-white font-bold">2</span>
+                    </div>
+                    <p className="text-sm font-medium text-gray-700">Review & Analysis</p>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mb-2">
+                      <span className="text-white font-bold">3</span>
+                    </div>
+                    <p className="text-sm font-medium text-gray-700">Personal Response</p>
+                  </div>
+                </div>
+              </div>
+
+              {formData.plan && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                  <p className="text-blue-800 font-medium">
+                    Selected Plan: <span className="font-bold">{formData.plan}</span>
+                  </p>
+                </div>
+              )}
+
+              <p className="text-gray-500 text-sm">
+                🚀 Quick response guaranteed • 📧 Check your email for confirmation
+              </p>
+            </motion.div>
+          </div>
         </div>
       </section>
     );
@@ -262,9 +303,35 @@ export default function OptIn({
               )}
 
               {error && (
-                <p className="text-sm text-red-600 text-center" role="alert">
-                  {error}
-                </p>
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{ duration: 0.3 }}
+                  className="relative bg-red-50 border border-red-200 rounded-xl p-4 shadow-sm"
+                  role="alert"
+                >
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0">
+                      <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-red-800 mb-1">
+                        Something went wrong
+                      </h4>
+                      <p className="text-sm text-red-700 leading-relaxed">
+                        {error}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setError(null)}
+                      className="flex-shrink-0 text-red-400 hover:text-red-600 transition-colors duration-200"
+                      aria-label="Dismiss error"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                </motion.div>
               )}
 
               <p className="text-sm text-gray-500 text-center">

@@ -994,21 +994,92 @@ export default function Home() {
                   <Button
                     type="submit"
                     className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.preventDefault();
                       
                       if (!formData.name || !formData.email) {
-                        alert('Please fill in your name and email address.');
+                        // Show validation error in modal instead of browser alert
                         return;
                       }
                       
-                      // Success alert with all details
-                      alert(`🎉 Request Sent Successfully!\n\nPackage: ${selectedPack?.name} (${selectedPack?.price})\nName: ${formData.name}\nEmail: ${formData.email}\nNotes: ${formData.message || 'None'}\n\nWe'll contact you within 24 hours to discuss your project!`);
-                      
-                      // Reset and close
-                      setFormData({ name: "", email: "", message: "" });
-                      setShowPackageModal(false);
-                      setSelectedPack(null);
+                      try {
+                        // Send to API
+                        const response = await fetch('/api/contact', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            name: formData.name,
+                            email: formData.email,
+                            message: formData.message || 'No additional notes',
+                            plan: `${selectedPack?.name} - ${selectedPack?.price}`,
+                            subject: `New inquiry for ${selectedPack?.name} package`
+                          })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (response.ok && result.ok) {
+                          // Show success state in modal
+                          setShowPackageModal(false);
+                          setSelectedPack(null);
+                          setFormData({ name: "", email: "", message: "" });
+                          
+                          // Show success notification
+                          const successDiv = document.createElement('div');
+                          successDiv.innerHTML = `
+                            <div style="position: fixed; top: 20px; right: 20px; z-index: 10000; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-width: 400px; animation: slideIn 0.3s ease-out;">
+                              <div style="display: flex; align-items: start; gap: 12px;">
+                                <div style="font-size: 20px;">🎉</div>
+                                <div>
+                                  <div style="font-weight: 600; margin-bottom: 4px;">Request Sent Successfully!</div>
+                                  <div style="font-size: 14px; opacity: 0.9;">Package: ${selectedPack?.name} (${selectedPack?.price})</div>
+                                  <div style="font-size: 14px; opacity: 0.9;">We'll contact you within 24 hours!</div>
+                                </div>
+                                <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer; opacity: 0.7; hover: opacity: 1;">×</button>
+                              </div>
+                            </div>
+                            <style>
+                              @keyframes slideIn {
+                                from { transform: translateX(100%); opacity: 0; }
+                                to { transform: translateX(0); opacity: 1; }
+                              }
+                            </style>
+                          `;
+                          document.body.appendChild(successDiv);
+                          
+                          // Auto remove after 5 seconds
+                          setTimeout(() => {
+                            if (successDiv.parentElement) {
+                              successDiv.remove();
+                            }
+                          }, 5000);
+                        } else {
+                          throw new Error(result.error || 'Failed to send request');
+                        }
+                      } catch (error) {
+                        // Show error notification
+                        const errorDiv = document.createElement('div');
+                        errorDiv.innerHTML = `
+                          <div style="position: fixed; top: 20px; right: 20px; z-index: 10000; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-width: 400px; animation: slideIn 0.3s ease-out;">
+                            <div style="display: flex; align-items: start; gap: 12px;">
+                              <div style="font-size: 20px;">⚠️</div>
+                              <div>
+                                <div style="font-weight: 600; margin-bottom: 4px;">Failed to Send Request</div>
+                                <div style="font-size: 14px; opacity: 0.9;">${error instanceof Error ? error.message : 'Please try again later'}</div>
+                              </div>
+                              <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer; opacity: 0.7; hover: opacity: 1;">×</button>
+                            </div>
+                          </div>
+                        `;
+                        document.body.appendChild(errorDiv);
+                        
+                        // Auto remove after 5 seconds
+                        setTimeout(() => {
+                          if (errorDiv.parentElement) {
+                            errorDiv.remove();
+                          }
+                        }, 5000);
+                      }
                     }}
                   >
                     Send Request
@@ -1171,7 +1242,7 @@ export default function Home() {
                     <Button 
                       type="submit" 
                       className="w-full"
-                      onClick={(e) => {
+                      onClick={async (e) => {
                         e.preventDefault();
                         const form = (e.target as HTMLElement).closest('form');
                         if (!form) return;
@@ -1183,17 +1254,91 @@ export default function Home() {
                         const message = (document.getElementById('contact-message') as HTMLTextAreaElement)?.value;
                         
                         if (!firstName || !email) {
-                          alert('Please fill in your name and email address.');
+                          // Show validation error notification
+                          const errorDiv = document.createElement('div');
+                          errorDiv.innerHTML = `
+                            <div style="position: fixed; top: 20px; right: 20px; z-index: 10000; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-width: 400px; animation: slideIn 0.3s ease-out;">
+                              <div style="display: flex; align-items: start; gap: 12px;">
+                                <div style="font-size: 20px;">⚠️</div>
+                                <div>
+                                  <div style="font-weight: 600; margin-bottom: 4px;">Required Fields Missing</div>
+                                  <div style="font-size: 14px; opacity: 0.9;">Please fill in your name and email address.</div>
+                                </div>
+                                <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer; opacity: 0.7;">×</button>
+                              </div>
+                            </div>
+                            <style>
+                              @keyframes slideIn {
+                                from { transform: translateX(100%); opacity: 0; }
+                                to { transform: translateX(0); opacity: 1; }
+                              }
+                            </style>
+                          `;
+                          document.body.appendChild(errorDiv);
+                          setTimeout(() => errorDiv.remove(), 4000);
                           return;
                         }
                         
-                        const packageInfo = selectedPack ? `\n\nSelected Package: ${selectedPack.name} - ${selectedPack.price}` : '';
-                        
-                        alert(`Message sent successfully!\n\nName: ${firstName} ${lastName}\nEmail: ${email}\nPhone: ${phone}\nMessage: ${message}${packageInfo}\n\nWe'll get back to you within 24 hours!`);
-                        
-                        // Reset form
-                        form.reset();
-                        setSelectedPack(null);
+                        try {
+                          // Send to API
+                          const response = await fetch('/api/contact', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              name: `${firstName} ${lastName}`.trim(),
+                              email: email,
+                              phone: phone,
+                              message: message || 'No message provided',
+                              plan: selectedPack ? `${selectedPack.name} - ${selectedPack.price}` : undefined,
+                              subject: 'New contact form submission'
+                            })
+                          });
+                          
+                          const result = await response.json();
+                          
+                          if (response.ok && result.ok) {
+                            // Show success notification
+                            const successDiv = document.createElement('div');
+                            successDiv.innerHTML = `
+                              <div style="position: fixed; top: 20px; right: 20px; z-index: 10000; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-width: 400px; animation: slideIn 0.3s ease-out;">
+                                <div style="display: flex; align-items: start; gap: 12px;">
+                                  <div style="font-size: 20px;">🎉</div>
+                                  <div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">Message Sent Successfully!</div>
+                                    <div style="font-size: 14px; opacity: 0.9;">We'll get back to you within 24 hours!</div>
+                                    ${selectedPack ? `<div style="font-size: 14px; opacity: 0.9;">Package: ${selectedPack.name}</div>` : ''}
+                                  </div>
+                                  <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer; opacity: 0.7;">×</button>
+                                </div>
+                              </div>
+                            `;
+                            document.body.appendChild(successDiv);
+                            setTimeout(() => successDiv.remove(), 5000);
+                            
+                            // Reset form
+                            form.reset();
+                            setSelectedPack(null);
+                          } else {
+                            throw new Error(result.error || 'Failed to send message');
+                          }
+                        } catch (error) {
+                          // Show error notification
+                          const errorDiv = document.createElement('div');
+                          errorDiv.innerHTML = `
+                            <div style="position: fixed; top: 20px; right: 20px; z-index: 10000; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-width: 400px; animation: slideIn 0.3s ease-out;">
+                              <div style="display: flex; align-items: start; gap: 12px;">
+                                <div style="font-size: 20px;">⚠️</div>
+                                <div>
+                                  <div style="font-weight: 600; margin-bottom: 4px;">Failed to Send Message</div>
+                                  <div style="font-size: 14px; opacity: 0.9;">${error instanceof Error ? error.message : 'Please try again later'}</div>
+                                </div>
+                                <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer; opacity: 0.7;">×</button>
+                              </div>
+                            </div>
+                          `;
+                          document.body.appendChild(errorDiv);
+                          setTimeout(() => errorDiv.remove(), 5000);
+                        }
                       }}
                     >
                       Send Message
